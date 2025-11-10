@@ -128,14 +128,54 @@ function makeRule(rule: LintRule): Rule.RuleModule {
             // If Flow already caught this error, we don't need to report it again.
             continue;
           }
+          // Check if this line has eslint-disable for react-hooks
+          const sourceCode = context.sourceCode ?? context.getSourceCode();
+          const lineNum = loc.start.line;
+          let hasESLintDisable = false;
+
+          const allComments = sourceCode.getAllComments?.() || [];
+          for (const comment of allComments) {
+            const commentLine = comment.loc?.end.line;
+            if (!commentLine) continue;
+
+            // Check for eslint-disable-next-line or eslint-disable
+            if (
+              (commentLine === lineNum - 1 &&
+                comment.value.includes('eslint-disable-next-line') &&
+                comment.value.includes('react-hooks')) ||
+              (commentLine <= lineNum &&
+                comment.value.includes('eslint-disable') &&
+                !comment.value.includes('eslint-disable-next-line') &&
+                comment.value.includes('react-hooks'))
+            ) {
+              hasESLintDisable = true;
+              break;
+            }
+          }
+
+          // For incompatible-library warnings, customize message based on eslint-disable
+          let message = detail.printErrorMessage(result.sourceCode, {
+            eslint: true,
+          });
+
+          if (rule.category === 'IncompatibleLibrary' && hasESLintDisable) {
+            message =
+              '⚠️  Warning: Using incompatible API with eslint-disable\n\n' +
+              'This hook will NOT be memoized by React Compiler due to eslint-disable.\n' +
+              'Be careful when using the returned value in components - it will create\n' +
+              'new references on every render.\n\n' +
+              '**Recommendations:**\n' +
+              '• Use this API directly in components (not in custom hooks)\n' +
+              '• Or remove eslint-disable and fix the underlying issues\n' +
+              '• Consider adding "use no memo" directive to opt-out explicitly';
+          }
+
           /*
            * TODO: if multiple rules report the same linter category,
            * we should deduplicate them with a "reported" set
            */
           context.report({
-            message: detail.printErrorMessage(result.sourceCode, {
-              eslint: true,
-            }),
+            message,
             loc,
             suggest: makeSuggestions(detail.options),
           });
