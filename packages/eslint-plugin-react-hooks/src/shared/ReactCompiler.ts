@@ -132,6 +132,36 @@ function makeRule(rule: LintRule): Rule.RuleModule {
            * TODO: if multiple rules report the same linter category,
            * we should deduplicate them with a "reported" set
            */
+          
+          // Check if this specific line is suppressed by ESLint comments
+          // This provides an additional safety check beyond React Compiler's suppression handling
+          const sourceCode = context.sourceCode ?? context.getSourceCode();
+          const lineNum = loc.start.line;
+          
+          // ESLint's built-in suppression check
+          // If the line is explicitly disabled, skip reporting
+          const allComments = sourceCode.getAllComments?.() || [];
+          let isLineSuppressed = false;
+          
+          for (const comment of allComments) {
+            const commentLine = comment.loc?.end.line;
+            if (!commentLine) continue;
+            
+            // Check for eslint-disable-next-line on the previous line
+            if (
+              commentLine === lineNum - 1 &&
+              comment.value.includes('eslint-disable-next-line') &&
+              comment.value.includes(rule.name)
+            ) {
+              isLineSuppressed = true;
+              break;
+            }
+          }
+          
+          if (isLineSuppressed) {
+            continue;
+          }
+          
           context.report({
             message: detail.printErrorMessage(result.sourceCode, {
               eslint: true,
