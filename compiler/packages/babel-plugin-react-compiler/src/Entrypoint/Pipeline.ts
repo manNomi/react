@@ -83,6 +83,7 @@ import {
   validateHooksUsage,
   validateMemoizedEffectDependencies,
   validateNoCapitalizedCalls,
+  validateNoIncompatibleAPIsInHooks,
   validateNoRefAccessInRender,
   validateNoSetStateInRender,
   validatePreservedManualMemoization,
@@ -211,6 +212,8 @@ function runWithEnvironment(
     if (env.config.validateNoCapitalizedCalls) {
       validateNoCapitalizedCalls(hir).unwrap();
     }
+    // Validate that incompatible APIs are not used in custom hooks
+    validateNoIncompatibleAPIsInHooks(hir);
   }
 
   if (env.config.enableFire) {

@@ -9,6 +9,7 @@ export {validateContextVariableLValues} from './ValidateContextVariableLValues';
 export {validateHooksUsage} from './ValidateHooksUsage';
 export {validateMemoizedEffectDependencies} from './ValidateMemoizedEffectDependencies';
 export {validateNoCapitalizedCalls} from './ValidateNoCapitalizedCalls';
+export {validateNoIncompatibleAPIsInHooks} from './ValidateNoIncompatibleAPIsInHooks';
 export {validateNoRefAccessInRender} from './ValidateNoRefAccessInRender';
 export {validateNoSetStateInRender} from './ValidateNoSetStateInRender';
 export {validatePreservedManualMemoization} from './ValidatePreservedManualMemoization';

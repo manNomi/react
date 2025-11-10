@@ -251,6 +251,27 @@ export type FunctionTypeConfig = {
   impure?: boolean | null | undefined;
   canonicalName?: string | null | undefined;
   aliasing?: AliasingSignatureConfig | null | undefined;
+  /**
+   * Marks a function as known to be incompatible with memoization.
+   * 
+   * When set, this field indicates that the function implements "interior mutability"
+   * and cannot be safely memoized by React Compiler or manually with useMemo/useCallback.
+   * 
+   * Example:
+   * ```ts
+   * {
+   *   kind: 'function',
+   *   knownIncompatible: 'This function reads from internal mutable state and cannot be memoized safely'
+   * }
+   * ```
+   * 
+   * The compiler will:
+   * - Show a warning when used directly in components
+   * - Should error when used in custom hooks (see ValidateNoIncompatibleAPIsInHooks)
+   * 
+   * @see DefaultModuleTypeProvider for examples of incompatible APIs
+   * @see ValidateNoIncompatibleAPIsInHooks for the custom hooks validation
+   */
   knownIncompatible?: string | null | undefined;
 };
 export const FunctionTypeSchema: z.ZodType<FunctionTypeConfig> = z.object({
@@ -276,6 +297,31 @@ export type HookTypeConfig = {
   returnValueKind?: ValueKind | null | undefined;
   noAlias?: boolean | null | undefined;
   aliasing?: AliasingSignatureConfig | null | undefined;
+  /**
+   * Marks a hook as known to be incompatible with memoization.
+   * 
+   * When set, this field indicates that the hook returns values or functions that
+   * implement "interior mutability" and cannot be safely memoized.
+   * 
+   * Example:
+   * ```ts
+   * {
+   *   kind: 'hook',
+   *   knownIncompatible: 'This hook returns functions that cannot be memoized safely'
+   * }
+   * ```
+   * 
+   * This can be set either on:
+   * 1. The hook itself - marking the entire hook as incompatible
+   * 2. Specific properties in the hook's returnType - marking only certain returned values
+   * 
+   * The compiler will:
+   * - Show a warning when used directly in components (current behavior)
+   * - Should error when used in custom hooks (proposed in ValidateNoIncompatibleAPIsInHooks)
+   * 
+   * @see DefaultModuleTypeProvider for examples (useForm, useReactTable, useVirtualizer)
+   * @see ValidateNoIncompatibleAPIsInHooks for the custom hooks validation
+   */
   knownIncompatible?: string | null | undefined;
 };
 export const HookTypeSchema: z.ZodType<HookTypeConfig> = z.object({
