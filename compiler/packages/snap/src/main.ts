@@ -36,7 +36,7 @@ const childProc = fork(require.resolve('./runner.js'), hideBin(process.argv), {
   stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
   // forward existing env variables, like `NODE_OPTIONS` which VSCode uses to attach
   // its debugger
-  env: {...process.env, FORCE_COLOR: 'true'},
+  env: {...process.env, FORCE_COLOR: 'true', NO_COLOR: undefined},
 });
 
 invariant(

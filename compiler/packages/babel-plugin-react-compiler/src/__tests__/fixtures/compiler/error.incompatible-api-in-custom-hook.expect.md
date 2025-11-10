@@ -32,9 +32,6 @@ error.incompatible-api-in-custom-hook.ts:5:15
   6 |   return data;
   7 | }
   8 |
-
-(node:83985) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
-(Use `node --trace-warnings ...` to show where the warning was created)
 ```
           
       
