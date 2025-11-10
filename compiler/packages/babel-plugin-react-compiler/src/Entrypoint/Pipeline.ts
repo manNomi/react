@@ -212,10 +212,6 @@ function runWithEnvironment(
     if (env.config.validateNoCapitalizedCalls) {
       validateNoCapitalizedCalls(hir).unwrap();
     }
-    if (env.config.validateNoIncompatibleAPIsInHooks) {
-      // Validate that incompatible APIs are not used in custom hooks
-      validateNoIncompatibleAPIsInHooks(hir);
-    }
   }
 
   if (env.config.enableFire) {
@@ -232,6 +228,15 @@ function runWithEnvironment(
 
   analyseFunctions(hir);
   log({kind: 'hir', name: 'AnalyseFunctions', value: hir});
+
+  // Validate before InferMutationAliasingEffects to catch incompatible APIs in custom hooks first
+  // This provides better error messages specific to the custom hook context
+  if (
+    env.isInferredMemoEnabled &&
+    env.config.validateNoIncompatibleAPIsInHooks
+  ) {
+    validateNoIncompatibleAPIsInHooks(hir);
+  }
 
   const mutabilityAliasingErrors = inferMutationAliasingEffects(hir);
   log({kind: 'hir', name: 'InferMutationAliasingEffects', value: hir});

@@ -87,7 +87,7 @@ export function validateNoIncompatibleAPIsInHooks(fn: HIRFunction): void {
                     `Custom hook \`${functionName}()\` uses an incompatible API. ${signature.knownIncompatible}\n\n` +
                     `This API should be used directly in components, not wrapped in custom hooks. ` +
                     `When used in a custom hook, React Compiler cannot optimize it properly, ` +
-                    `leading to silent failures in production.`,
+                    `leading to silent failures in production`,
                   loc: instr.loc,
                   suggestions: null,
                 }),
@@ -97,84 +97,24 @@ export function validateNoIncompatibleAPIsInHooks(fn: HIRFunction): void {
           }
           break;
         }
-        case 'PropertyLoad': {
-          const objectType = value.object.identifier.type;
-
-          if (objectType != null) {
-            const propertyType = fn.env.getPropertyType(
-              objectType,
-              value.property,
-            );
-
-            if (propertyType?.kind === 'Function') {
-              const propertySignature =
-                fn.env.getFunctionSignature(propertyType);
-
-              if (
-                propertySignature != null &&
-                propertySignature.knownIncompatible != null
-              ) {
-                const errors = new CompilerError();
-                errors.pushErrorDetail(
-                  new CompilerErrorDetail({
-                    category: ErrorCategory.IncompatibleLibrary,
-                    reason: 'Incompatible API property accessed in custom hook',
-                    description:
-                      `Custom hook \`${functionName}()\` accesses an incompatible property. ${propertySignature.knownIncompatible}\n\n` +
-                      `This property should be accessed directly in components, not in custom hooks.`,
-                    loc: instr.loc,
-                    suggestions: null,
-                  }),
-                );
-                throw errors;
-              }
-            }
-          }
-          break;
-        }
+        case 'PropertyLoad':
         case 'Destructure': {
-          // Check destructured properties from objects
-          const objectType = value.value.identifier.type;
-          if (objectType != null) {
-            // Check each destructured property
-            for (const lvalue of eachInstructionLValue(instr)) {
-              if (
-                lvalue.identifier.name !== null &&
-                lvalue.identifier.name.kind === 'named'
-              ) {
-                const propertyName = lvalue.identifier.name.value;
-                const propertyType = fn.env.getPropertyType(
-                  objectType,
-                  propertyName,
-                );
-
-                if (propertyType?.kind === 'Function') {
-                  const propertySignature =
-                    fn.env.getFunctionSignature(propertyType);
-
-                  if (
-                    propertySignature != null &&
-                    propertySignature.knownIncompatible != null
-                  ) {
-                    const errors = new CompilerError();
-                    errors.pushErrorDetail(
-                      new CompilerErrorDetail({
-                        category: ErrorCategory.IncompatibleLibrary,
-                        reason:
-                          'Incompatible API property accessed in custom hook',
-                        description:
-                          `Custom hook \`${functionName}()\` accesses an incompatible property. ${propertySignature.knownIncompatible}\n\n` +
-                          `This property should be accessed directly in components, not in custom hooks.`,
-                        loc: instr.loc,
-                        suggestions: null,
-                      }),
-                    );
-                    throw errors;
-                  }
-                }
-              }
-            }
-          }
+          // Note: PropertyLoad and Destructure detection are currently not implemented
+          // due to type inference limitations. When accessing properties like:
+          //   const result = useKnownIncompatibleIndirect();
+          //   return result.incompatibleMethod;
+          //
+          // The objectType refers to the variable's type, not the source hook's return type.
+          // getPropertyType() returns null because the type information chain is incomplete
+          // at this validation phase.
+          //
+          // Proper implementation would require:
+          // 1. Data flow analysis to trace variables back to their source
+          // 2. Running after InferMutationAliasingEffects (but that causes other issues)
+          // 3. Or integrating into InferMutationAliasingEffects itself
+          //
+          // For now, we only detect direct CallExpression usage, which catches the most
+          // common cases where hooks are called directly in custom hooks.
           break;
         }
       }

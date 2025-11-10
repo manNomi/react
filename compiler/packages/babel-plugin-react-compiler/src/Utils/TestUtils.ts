@@ -38,6 +38,7 @@ function tryParseTestPragmaValue(val: string): Result<unknown, unknown> {
 
 const testComplexConfigDefaults: PartialEnvironmentConfig = {
   validateNoCapitalizedCalls: [],
+  validateNoIncompatibleAPIsInHooks: true,
   enableChangeDetectionForDebugging: {
     source: 'react-compiler-runtime',
     importSpecifierName: '$structuralCheck',

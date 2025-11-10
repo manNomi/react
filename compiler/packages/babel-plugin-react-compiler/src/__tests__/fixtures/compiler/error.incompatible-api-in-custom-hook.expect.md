@@ -22,7 +22,7 @@ Compilation Skipped: Incompatible API used in custom hook
 
 Custom hook `useMyCustomHook()` uses an incompatible API. useKnownIncompatible is known to be incompatible
 
-This API should be used directly in components, not wrapped in custom hooks. When used in a custom hook, React Compiler cannot optimize it properly, leading to silent failures in production..
+This API should be used directly in components, not wrapped in custom hooks. When used in a custom hook, React Compiler cannot optimize it properly, leading to silent failures in production.
 
 error.incompatible-api-in-custom-hook.ts:5:15
   3 |
@@ -32,6 +32,9 @@ error.incompatible-api-in-custom-hook.ts:5:15
   6 |   return data;
   7 | }
   8 |
+
+(node:83985) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
 ```
           
       
