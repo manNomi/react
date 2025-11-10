@@ -40,13 +40,24 @@ The function didn't distinguish between these two contexts, causing lint warning
 
 ### Solution
 
+This fix provides **two layers of protection** to ensure correct line-level suppression handling:
+
+#### Layer 1: React Compiler (Suppression.ts)
 1. Added `isNextLineOnly: boolean` field to `SuppressionRange` type
 2. Updated `findProgramSuppressions` to mark next-line suppressions with `isNextLineOnly = true`
 3. Modified `filterSuppressionsThatAffectFunction` to accept `noEmit: boolean` parameter
 4. **Key change**: In lint mode (`noEmit: true`), next-line suppressions are skipped, allowing other lint rules to check the function
 5. In compilation mode (`noEmit: false`), next-line suppressions still affect the entire function (conservative/safe)
-6. Updated existing test to use `eslint-disable` block syntax (which correctly affects function scope)
-7. Added new test case to verify next-line suppressions work correctly
+
+#### Layer 2: ESLint Plugin (ReactCompiler.ts)
+6. Added line-level suppression check before reporting errors
+7. Inspects ESLint comments to verify if a specific line is suppressed
+8. Respects `eslint-disable-next-line` for the exact rule being reported
+9. Provides additional safety even if React Compiler's suppression handling has edge cases
+
+#### Testing
+10. Updated existing test to use `eslint-disable` block syntax (which correctly affects function scope)
+11. Added new test case to verify next-line suppressions work correctly
 
 ### Context-Aware Behavior
 
@@ -107,12 +118,27 @@ Created a test case with:
 
 ## Files Changed
 
+### React Compiler (Core Logic)
 ```
 compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Suppression.ts
   - Added isNextLineOnly field to SuppressionRange type
-  - Updated filterSuppressionsThatAffectFunction to skip next-line suppressions
+  - Updated filterSuppressionsThatAffectFunction to skip next-line suppressions in lint mode
   - Updated findProgramSuppressions to mark next-line patterns
 
+compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Program.ts
+  - Pass noEmit parameter to filterSuppressionsThatAffectFunction
+```
+
+### ESLint Plugin (Reporting Layer)
+```
+packages/eslint-plugin-react-hooks/src/shared/ReactCompiler.ts
+  - Added line-level suppression check before context.report()
+  - Checks ESLint comments to verify if specific lines are suppressed
+  - Respects eslint-disable-next-line for the exact rule being reported
+```
+
+### Tests
+```
 compiler/packages/babel-plugin-react-compiler/src/__tests__/fixtures/compiler/error.sketchy-code-exhaustive-deps.js
   - Changed from eslint-disable-next-line to eslint-disable block
 
