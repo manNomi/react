@@ -28,6 +28,7 @@ export type SuppressionRange = {
   disableComment: t.Comment;
   enableComment: t.Comment | null;
   source: SuppressionSource;
+  isNextLineOnly: boolean;
 };
 
 type SuppressionSource = 'Eslint' | 'Flow';
@@ -36,10 +37,15 @@ type SuppressionSource = 'Eslint' | 'Flow';
  * An suppression affects a function if:
  *   1. The suppression is within the function's body; or
  *   2. The suppression wraps the function
+ *   3. For next-line suppressions in lint mode (noEmit), they do NOT affect 
+ *      the entire function, only the specific line they target
+ *   4. For next-line suppressions in compilation mode, they DO affect the
+ *      entire function for safety (conservative approach)
  */
 export function filterSuppressionsThatAffectFunction(
   suppressionRanges: Array<SuppressionRange>,
   fn: NodePath<t.Function>,
+  noEmit: boolean,
 ): Array<SuppressionRange> {
   const suppressionsInScope: Array<SuppressionRange> = [];
   const fnNode = fn.node;
@@ -51,6 +57,13 @@ export function filterSuppressionsThatAffectFunction(
     ) {
       continue;
     }
+    
+    // In lint mode (noEmit=true), next-line suppressions only affect the specific line
+    // In compilation mode (noEmit=false), be conservative and skip the entire function
+    if (suppressionRange.isNextLineOnly && noEmit) {
+      continue;
+    }
+    
     // The suppression is within the function
     if (
       suppressionRange.disableComment.start > fnNode.start &&
@@ -107,6 +120,8 @@ export function findProgramSuppressions(
       continue;
     }
 
+    let isNextLineOnly = false;
+    
     if (
       /*
        * If we're already within a CommentBlock, we should not restart the range prematurely for a
@@ -119,6 +134,7 @@ export function findProgramSuppressions(
       disableComment = comment;
       enableComment = comment;
       source = 'Eslint';
+      isNextLineOnly = true;
     }
 
     if (
@@ -129,11 +145,13 @@ export function findProgramSuppressions(
       disableComment = comment;
       enableComment = comment;
       source = 'Flow';
+      isNextLineOnly = true;
     }
 
     if (disablePattern != null && disablePattern.test(comment.value)) {
       disableComment = comment;
       source = 'Eslint';
+      isNextLineOnly = false;
     }
 
     if (
@@ -149,6 +167,7 @@ export function findProgramSuppressions(
         disableComment: disableComment,
         enableComment: enableComment,
         source,
+        isNextLineOnly,
       });
       disableComment = null;
       enableComment = null;

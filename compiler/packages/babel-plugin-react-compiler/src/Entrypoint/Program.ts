@@ -704,6 +704,7 @@ function tryCompileFunction(
   const suppressionsInFunction = filterSuppressionsThatAffectFunction(
     programContext.suppressions,
     fn,
+    programContext.opts.noEmit,
   );
   if (suppressionsInFunction.length > 0) {
     return {
