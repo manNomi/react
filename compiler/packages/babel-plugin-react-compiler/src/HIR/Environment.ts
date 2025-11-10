@@ -365,6 +365,11 @@ export const EnvironmentConfigSchema = z.object({
   validateBlocklistedImports: z.nullable(z.array(z.string())).default(null),
 
   /**
+   * Validate that incompatible APIs are not used in custom hooks
+   */
+  validateNoIncompatibleAPIsInHooks: z.boolean().default(false),
+
+  /**
    * Validate against impure functions called during render
    */
   validateNoImpureFunctionsInRender: z.boolean().default(false),

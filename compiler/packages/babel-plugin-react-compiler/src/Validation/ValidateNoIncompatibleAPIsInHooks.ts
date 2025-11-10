@@ -5,8 +5,13 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import {CompilerError, CompilerErrorDetail, ErrorCategory} from '../CompilerError';
+import {
+  CompilerError,
+  CompilerErrorDetail,
+  ErrorCategory,
+} from '../CompilerError';
 import {HIRFunction} from '../HIR/HIR';
+import {eachInstructionLValue} from '../HIR/visitors';
 
 /*
  * Validates that known incompatible APIs are not used inside custom hooks.
@@ -122,6 +127,51 @@ export function validateNoIncompatibleAPIsInHooks(fn: HIRFunction): void {
                   }),
                 );
                 throw errors;
+              }
+            }
+          }
+          break;
+        }
+        case 'Destructure': {
+          // Check destructured properties from objects
+          const objectType = value.value.identifier.type;
+          if (objectType != null) {
+            // Check each destructured property
+            for (const lvalue of eachInstructionLValue(instr)) {
+              if (
+                lvalue.identifier.name !== null &&
+                lvalue.identifier.name.kind === 'named'
+              ) {
+                const propertyName = lvalue.identifier.name.value;
+                const propertyType = fn.env.getPropertyType(
+                  objectType,
+                  propertyName,
+                );
+
+                if (propertyType?.kind === 'Function') {
+                  const propertySignature =
+                    fn.env.getFunctionSignature(propertyType);
+
+                  if (
+                    propertySignature != null &&
+                    propertySignature.knownIncompatible != null
+                  ) {
+                    const errors = new CompilerError();
+                    errors.pushErrorDetail(
+                      new CompilerErrorDetail({
+                        category: ErrorCategory.IncompatibleLibrary,
+                        reason:
+                          'Incompatible API property accessed in custom hook',
+                        description:
+                          `Custom hook \`${functionName}()\` accesses an incompatible property. ${propertySignature.knownIncompatible}\n\n` +
+                          `This property should be accessed directly in components, not in custom hooks.`,
+                        loc: instr.loc,
+                        suggestions: null,
+                      }),
+                    );
+                    throw errors;
+                  }
+                }
               }
             }
           }

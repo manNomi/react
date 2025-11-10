@@ -212,8 +212,10 @@ function runWithEnvironment(
     if (env.config.validateNoCapitalizedCalls) {
       validateNoCapitalizedCalls(hir).unwrap();
     }
-    // Validate that incompatible APIs are not used in custom hooks
-    validateNoIncompatibleAPIsInHooks(hir);
+    if (env.config.validateNoIncompatibleAPIsInHooks) {
+      // Validate that incompatible APIs are not used in custom hooks
+      validateNoIncompatibleAPIsInHooks(hir);
+    }
   }
 
   if (env.config.enableFire) {
