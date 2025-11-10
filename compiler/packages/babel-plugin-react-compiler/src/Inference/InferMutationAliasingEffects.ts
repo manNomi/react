@@ -2458,10 +2458,18 @@ function computeEffectsForLegacySignature(
         category: ErrorCategory.IncompatibleLibrary,
         reason: 'Use of incompatible library',
         description: [
-          'This API returns functions which cannot be memoized without leading to stale UI. ' +
-            'To prevent this, by default React Compiler will skip memoizing this component/hook. ' +
-            'However, you may see issues if values from this API are passed to other components/hooks that are ' +
-            'memoized',
+          '⚠️  This API returns functions which cannot be memoized without leading to stale UI.\n\n' +
+            '**Impact:**\n' +
+            '• This component/hook will NOT be memoized by React Compiler\n' +
+            '• Returns new object references on every render\n' +
+            '• Breaks memoization of parent components\n' +
+            '• May cause performance issues\n\n' +
+            '**Recommended solutions:**\n' +
+            '1. List all dependencies correctly in your effect/memo hooks\n' +
+            '2. Add "use no memo" directive to explicitly opt-out of memoization\n' +
+            '3. Use incompatible APIs directly in components (not in custom hooks)\n\n' +
+            '**Note:** This warning appears even with eslint-disable comments. ' +
+            'This is intentional to ensure you\'re aware of the memoization impact.',
         ].join(''),
       }).withDetails({
         kind: 'error',
