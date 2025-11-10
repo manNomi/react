@@ -1,8 +1,8 @@
-# Fix: eslint-disable-next-line should only affect lint checking, not compilation
+# Fix: Show incompatible library warnings even with eslint-disable
 
 ## Summary
 
-This PR fixes a bug in the React Compiler where `eslint-disable-next-line` comments for react-hooks rules were suppressing lint checks for the entire function instead of just the next line, causing developers to miss critical `incompatible-library` warnings.
+This PR fixes a critical bug where developers miss `incompatible-library` warnings when using `eslint-disable-next-line` in custom hooks. The fix ensures developers are always informed about incompatible APIs that break memoization, even when they suppress other lint rules.
 
 ### Problem
 
@@ -55,9 +55,15 @@ This fix provides **two layers of protection** to ensure correct line-level supp
 8. Respects `eslint-disable-next-line` for the exact rule being reported
 9. Provides additional safety even if React Compiler's suppression handling has edge cases
 
+#### Layer 3: Improved Warning Message (InferMutationAliasingEffects.ts)
+10. Enhanced incompatible library warning with clear impact explanation
+11. Added 3 concrete solution options for developers
+12. Explained that warning appears even with eslint-disable (intentional)
+13. Used formatting for better readability
+
 #### Testing
-10. Updated existing test to use `eslint-disable` block syntax (which correctly affects function scope)
-11. Added new test case to verify next-line suppressions work correctly
+14. Updated existing test to use `eslint-disable` block syntax (which correctly affects function scope)
+15. Added new test case to verify next-line suppressions work correctly
 
 ### Context-Aware Behavior
 
@@ -135,6 +141,15 @@ packages/eslint-plugin-react-hooks/src/shared/ReactCompiler.ts
   - Added line-level suppression check before context.report()
   - Checks ESLint comments to verify if specific lines are suppressed
   - Respects eslint-disable-next-line for the exact rule being reported
+```
+
+### Warning Message (Developer Experience)
+```
+compiler/packages/babel-plugin-react-compiler/src/Inference/InferMutationAliasingEffects.ts
+  - Enhanced incompatible library warning message
+  - Added clear impact explanation (not memoized, new references, etc.)
+  - Provided 3 concrete solution options
+  - Explained warning appears even with eslint-disable
 ```
 
 ### Tests
