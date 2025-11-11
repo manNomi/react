@@ -180,17 +180,42 @@ export function suppressionsToCompilerError(
     ) {
       continue;
     }
-    let reason, suggestion;
+    let reason, description, suggestion;
     switch (suppressionRange.source) {
       case 'Eslint':
         reason =
           'React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled';
+        description = [
+          'React Compiler cannot optimize this code due to ESLint suppression.',
+          '',
+          'This suppression may hide critical issues:',
+          '• Incompatible API warnings (e.g., useVirtualizer, Framer Motion hooks)',
+          '• Hook dependency problems',
+          '• Memoization failures in components using this code',
+          '',
+          'To fix:',
+          '1. Remove the ESLint suppression and address the underlying issue, or',
+          '2. Add "use no memo" directive to explicitly opt out of optimization',
+          '',
+          `Found suppression: \`${suppressionRange.disableComment.value.trim()}\``,
+        ].join('\n');
         suggestion =
           'Remove the ESLint suppression and address the React error';
         break;
       case 'Flow':
         reason =
           'React Compiler has skipped optimizing this component because one or more React rule violations were reported by Flow';
+        description = [
+          'React Compiler cannot optimize this code due to Flow suppression.',
+          '',
+          'This suppression may hide critical issues that could affect memoization.',
+          '',
+          'To fix:',
+          '1. Remove the Flow suppression and address the underlying issue, or',
+          '2. Add "use no memo" directive to explicitly opt out of optimization',
+          '',
+          `Found suppression: \`${suppressionRange.disableComment.value.trim()}\``,
+        ].join('\n');
         suggestion = 'Remove the Flow suppression and address the React error';
         break;
       default:
@@ -202,7 +227,7 @@ export function suppressionsToCompilerError(
     error.pushDiagnostic(
       CompilerDiagnostic.create({
         reason: reason,
-        description: `React Compiler only works when your components follow all the rules of React, disabling them may result in unexpected or incorrect behavior. Found suppression \`${suppressionRange.disableComment.value.trim()}\``,
+        description: description,
         category: ErrorCategory.Suppression,
         suggestions: [
           {

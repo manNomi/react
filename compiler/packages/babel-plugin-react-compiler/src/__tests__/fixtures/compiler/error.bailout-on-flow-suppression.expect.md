@@ -20,7 +20,15 @@ Found 1 error:
 
 Error: React Compiler has skipped optimizing this component because one or more React rule violations were reported by Flow
 
-React Compiler only works when your components follow all the rules of React, disabling them may result in unexpected or incorrect behavior. Found suppression `$FlowFixMe[react-rule-hook]`.
+React Compiler cannot optimize this code due to Flow suppression.
+
+This suppression may hide critical issues that could affect memoization.
+
+To fix:
+1. Remove the Flow suppression and address the underlying issue, or
+2. Add "use no memo" directive to explicitly opt out of optimization
+
+Found suppression: `$FlowFixMe[react-rule-hook]`.
 
 error.bailout-on-flow-suppression.ts:4:2
   2 |
