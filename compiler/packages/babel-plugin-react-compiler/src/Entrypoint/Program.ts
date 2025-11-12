@@ -706,10 +706,27 @@ function tryCompileFunction(
     fn,
   );
   if (suppressionsInFunction.length > 0) {
-    return {
-      kind: 'error',
-      error: suppressionsToCompilerError(suppressionsInFunction),
-    };
+    /*
+     * In noEmit mode (typically used with ESLint), continue analyzing the code
+     * even when suppressions are present. This allows reporting of compiler diagnostics
+     * without skipping the entire function.
+     * See: https://github.com/facebook/react/issues/35105
+     */
+    if (!programContext.opts.noEmit) {
+      return {
+        kind: 'error',
+        error: suppressionsToCompilerError(suppressionsInFunction),
+      };
+    }
+    /*
+     * In noEmit mode, log the suppression as a diagnostic but continue compilation
+     * to detect other potential issues (e.g., incompatible API usage)
+     */
+    logError(
+      suppressionsToCompilerError(suppressionsInFunction),
+      programContext,
+      fn.node.loc ?? null,
+    );
   }
 
   try {
