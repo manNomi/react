@@ -706,10 +706,26 @@ function tryCompileFunction(
     fn,
   );
   if (suppressionsInFunction.length > 0) {
-    return {
-      kind: 'error',
-      error: suppressionsToCompilerError(suppressionsInFunction),
-    };
+    /* In noEmit mode, keep analyzing so unrelated suppressions don't hide diagnostics. */
+    if (!programContext.opts.noEmit) {
+      /*
+       * Build mode: maintain existing behavior
+       * If suppressions exist, skip compilation entirely
+       */
+      return {
+        kind: 'error',
+        error: suppressionsToCompilerError(suppressionsInFunction),
+      };
+    }
+
+    /* ESLint mode: log the suppression but continue compiling to find other issues. */
+    logError(
+      suppressionsToCompilerError(suppressionsInFunction),
+      programContext,
+      fn.node.loc ?? null,
+    );
+
+    // Continue with compilation analysis below
   }
 
   try {
